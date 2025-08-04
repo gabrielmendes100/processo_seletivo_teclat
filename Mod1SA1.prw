@@ -37,7 +37,7 @@ User Function Mod1SA1()
     Next nAtual 
     oBrowse:AddLegend(cCepVazio, "BR_VERMELHO", "CEP em Branco")
     oBrowse:AddLegend(cEndVazio, "BR_AMARELO" , "CEP preenchido, mas os demais campos vazios")
-    oBrowse:AddLegend(cOk      , "BR_VERDE"   , "Campos de Endereço preenchidos")
+    oBrowse:AddLegend(cOk      , "BR_VERDE"   , "Campos de Endereï¿½o preenchidos")
     oBrowse:SetColumns(aColumns)
     oBrowse:SetDescription(cTitulo)
     oBrowse:Activate()
@@ -50,8 +50,8 @@ Static Function MenuDef()
     
     ADD OPTION aRot TITLE 'Visualizar'                            ACTION 'VIEWDEF.Mod1SA1' OPERATION MODEL_OPERATION_VIEW ACCESS 0
     ADD OPTION aRot TITLE 'Legendas'                              ACTION 'U_LegMod1()' OPERATION 7 ACCESS 0
-    ADD OPTION aRot TITLE 'Atualizar Endereço por CEP (manual)  ' ACTION 'U_ModAtuWS()' OPERATION 4 ACCESS 0
-    ADD OPTION aRot TITLE 'Atualizar Endereço via CSV (em Massa)' ACTION 'U_ModAtuCsv()' OPERATION 4 ACCESS 0
+    ADD OPTION aRot TITLE 'Atualizar Endereï¿½o por CEP (manual)  ' ACTION 'U_ModAtuWS()' OPERATION 4 ACCESS 0
+    ADD OPTION aRot TITLE 'Atualizar Endereï¿½o via CSV (em Massa)' ACTION 'U_ModAtuCsv()' OPERATION 4 ACCESS 0
  
 Return aRot
 
@@ -65,7 +65,7 @@ Static Function ModelDef()
           
     oModel:SetDescription("Modelo de Dados do Cadastro "+cTitulo)
      
-    oModel:GetModel("FORMSA1"):SetDescription("Formulário do Cadastro "+cTitulo)
+    oModel:GetModel("FORMSA1"):SetDescription("Formulï¿½rio do Cadastro "+cTitulo)
 Return oModel
  
 Static Function ViewDef()
@@ -88,7 +88,7 @@ User Function LegMod1()
 
     aAdd(aLegenda,{"BR_VERMELHO",     "CEP em Branco"})
     aAdd(aLegenda,{"BR_AMARELO",      "CEP preenchido, mas os demais campos vazios"})
-    aAdd(aLegenda,{"BR_VERDE",        "Campos de Endereço preenchidos"})
+    aAdd(aLegenda,{"BR_VERDE",        "Campos de Endereï¿½o preenchidos"})
      
     BrwLegenda("Legendas", "Legendas - Clientes", aLegenda)
 Return
@@ -101,8 +101,8 @@ UsER Function ModAtuCsv()
 
         oFont := TFont():New('Courier new',,-18,.T.)
 
-        TSay():New(010, 010, {|| "Rotina de Atualização de dados de endereço via csv;"}                             , oDlg, , , , , , .T., , , 200, 10)
-        TSay():New(020, 010, {|| "A rotina irá atualizar os dados de endereço dos clientes;"}                       , oDlg, , , , , , .T., , , 200, 10)
+        TSay():New(010, 010, {|| "Rotina de Atualizaï¿½ï¿½o de dados de endereï¿½o via csv;"}                             , oDlg, , , , , , .T., , , 200, 10)
+        TSay():New(020, 010, {|| "A rotina irï¿½ atualizar os dados de endereï¿½o dos clientes;"}                       , oDlg, , , , , , .T., , , 200, 10)
         
         TButton():New(060, 150, "Baixar CSV"    , oDlg, {|| BaixarCsv()            }  , 40, 012, , , , .T., , , , , ,)
         TButton():New(060, 200, "Importar"      , oDlg, {|| ImpCsv()   , oDlg:End()}  , 40, 012, , , , .T., , , , , ,)
@@ -117,7 +117,7 @@ Static Function BaixarCsv()
     Local nHandle    := 0
     Local cQuery     := ""
     
-    if MsgNoYes("Deseja baixar o CSV de modelo para a atualização de dados?")
+    if MsgNoYes("Deseja baixar o CSV de modelo para a atualizaï¿½ï¿½o de dados?")
 
         cLinha := "CODIGO;LOJA;CEP;ENDERECO;COMPLEMENTO;BAIRRO;CIDADE;UF" + CRLF
 
@@ -173,7 +173,7 @@ Static Function ImpCsv()
 
     cArquivo := cGetFile( 'Arquivo CSV|*.csv','Selecao de Arquivos') 
 
-    if  MsgNoYes("Deseja Prosseguir com a atualização?")
+    if  MsgNoYes("Deseja Prosseguir com a atualizaï¿½ï¿½o?")
 
         aAdd(aFields, {"CODIGO"     , "A1_COD"    })
         aAdd(aFields, {"LOJA"       , "A1_LOJA"   })
@@ -185,14 +185,14 @@ Static Function ImpCsv()
         aAdd(aFields, {"UF"         , "A1_EST"    })
 
         If !File(cArquivo)
-            MsgStop("Arquivo CSV não encontrado!")
+            MsgStop("Arquivo CSV nï¿½o encontrado!")
             Return
         EndIf
 
         aLinhas := FileToArr(cArquivo)
 
         If Len(aLinhas) <= 1
-            MsgStop("Arquivo CSV vazio ou contém apenas cabeçalho!")
+            MsgStop("Arquivo CSV vazio ou contï¿½m apenas cabeï¿½alho!")
             Return
         EndIf
 
@@ -208,7 +208,7 @@ Static Function ImpCsv()
                 else
                     cDado := Alltrim(Decodeutf8(aLinha[j]))
                     
-                    if  aFields[j][2] == "A1_COD_MUN"
+                    if  aFields[j][2] == "A1_MUN"
                         aAdd(aExecAuto, {"A1_COD_MUN", Posicione("CC2",2,xFilial("CC2")+Upper(cDado),"CC2_CODMUN"),NIL })
                     Endif
 
@@ -218,6 +218,9 @@ Static Function ImpCsv()
             Next
 
             lMsErroAuto := .F.
+            
+            aExecAuto := FWVetByDic( aExecAuto, 'SA1' )
+
             If GetMv("MV_MVCSA1")
                 MSExecAuto({|x,y| CRMA980(x,y)}, aExecAuto, 4)
             else
@@ -227,9 +230,9 @@ Static Function ImpCsv()
             IF lMsErroAuto
                 AutoGrLog("Erro na linha " + cValToChar(i) + " do arquivo")
                 cLog := StrTran(ArrTokStr(GetAutoGrLog()),"|",CRLF)
-                nOpcAviso := Aviso("Erro na Importação",;
+                nOpcAviso := Aviso("Erro na Importaï¿½ï¿½o",;
                 cLog + CRLF + ;
-                'Esta mensagem fechará em 5 segundos. Para interromper o timer, selecione "Timer Off". ',;
+                'Esta mensagem fecharï¿½ em 5 segundos. Para interromper o timer, selecione "Timer Off". ',;
                 {"OK"},,, 1,,,5)
 
             ENDIF
@@ -250,7 +253,7 @@ User Function ModAtuWs()
 
     DEFINE MSDIALOG oDlg TITLE cTitulo FROM 000, 000  TO 500, 700  PIXEL
         @ 010, 010 SAY "CEP:"         SIZE 050, 007 OF oDlg PIXEL 
-        @ 040, 010 SAY "Endereço:"    SIZE 050, 007 OF oDlg PIXEL
+        @ 040, 010 SAY "Endereï¿½o:"    SIZE 050, 007 OF oDlg PIXEL
         @ 070, 010 SAY "Complemento:" SIZE 050, 007 OF oDlg PIXEL
         @ 100, 010 SAY "Bairro:"      SIZE 050, 007 OF oDlg PIXEL
         @ 130, 010 SAY "Cidade:"      SIZE 050, 007 OF oDlg PIXEL
@@ -295,10 +298,10 @@ Static Function ConsultaCEP(oRest, cEnd, cComp, cBairro, cCidade, cUF, cCep)
             cCidade := Upper(Decodeutf8(Alltochar(oJson:GetJsonObject("localidade"))))
             cUF     := Upper(Decodeutf8(Alltochar(oJson:GetJsonObject("uf"))))
         else
-            MsgStop("CEP não encontrado!")
+            MsgStop("CEP nï¿½o encontrado!")
         endif
     Else
-        MsgStop("CEP não encontrado!")
+        MsgStop("CEP nï¿½o encontrado!")
     EndIf
 Return .t.
 Static Function AtuSA1WS(cEnd, cComp, cBairro, cCidade, cUF, cCep)
@@ -330,7 +333,7 @@ Static Function AtuSA1WS(cEnd, cComp, cBairro, cCidade, cUF, cCep)
 
     If lMsErroAuto
         cLog := StrTran(ArrTokStr(GetAutoGrLog()),"|",CRLF)
-        Aviso("Erro na Importação", cLog )
+        Aviso("Erro na Importaï¿½ï¿½o", cLog )
     Else
         FwAlertSuccess("Cliente atualizado com sucesso!")
     EndIf
