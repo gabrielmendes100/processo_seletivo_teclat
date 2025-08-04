@@ -1,0 +1,24 @@
+//Bibliotecas
+#Include "Tlpp-Core.th"
+#Include "Tlpp-Rest.th"
+#Include "CRMA980.ch"
+
+@put("/api/clientecustom/alteracli")
+User Function WSAlteraCli()
+    Local aRet :=  U_AltCliFun(oRest:getBodyRequest()) as Array
+
+    oRest:setStatusCode(aRet[1])
+    oRest:setKeyHeaderResponse('Content-Type','application/json')
+    oRest:setResponse(aRet[2])
+
+Return .t.
+
+@get("/api/clientecustom/getclientes")
+User Function WSGetCli()
+    Local aRet :=  U_GetCliFun(oRest:getBodyRequest()) as Array
+
+    oRest:setStatusCode(aRet[1])
+    oRest:setKeyHeaderResponse('Content-Type','application/json')
+    oRest:setResponse(aRet[2])
+
+Return .t.

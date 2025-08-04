@@ -1,0 +1,32 @@
+Estrutura do Projeto
+
+Este projeto segue o padrão MVC (Model-View-Controller) para organização do código, além de expor webservices RESTful.
+
+Mod1SA1 (MODELO 1 em MVC)
+  - O arquivo Mod1SA1.prw representa a tela MODELO 1, funcionando como a View e Controller no padrão MVC.
+  - Ele é responsável pela interface do usuário e pela lógica de interação, conectando-se aos serviços de backend implementados em TLPP.
+
+RestConst (Constructor)
+  - O arquivo RestConst.tlpp define os endpoints REST do sistema.
+  - Cada função com @put ou @get é um endpoint da API, responsável por receber requisições HTTP e repassar para funções de serviço.
+  - Exemplo:
+    - @put("/api/clientecustom/alteracli") chama a função WSAlteraCli(), que processa requisições de alteração de cliente.
+    - @get("/api/clientecustom/getclientes") chama a função WSGetCli(), que retorna informações de clientes.
+
+RestService (Service)
+  - O arquivo RestService.tlpp implementa a lógica de negócio dos serviços.
+  - Contém funções como:
+    - AltCliFun: responsável pela atualização de endereço dos clientes.
+    - GetCliFun: responsável por fornecer os dados exibidos na tela em POUI.
+  - Essas funções são chamadas pelos endpoints definidos em RestConst.tlpp.
+
+prj-poui (Tela em POUI)
+  - Tela em POUI baseada no Modelo 1 em MVC. 
+
+ Autenticação (TELA POUI)
+  - A autenticação da API Rest, para o preenchimento da GRID de clientes da rotina em POUI está informada em app.components.ts (caminho:  
+    prj-poui\src\app\app.components.ts), podendo ser alterado no código para teste da rotina.
+  - Trecho:
+      const headers = new HttpHeaders({
+      Authorization: 'Basic ' + btoa('admin:msadm') 
+    });

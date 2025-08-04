@@ -1,0 +1,166 @@
+//Bibliotecas
+#Include "Tlpp-Core.th"
+#Include "Topconn.ch"
+#Include "Tlpp-Rest.th"
+#Include "CRMA980.ch"
+#Include 'Protheus.ch'
+
+User Function AltCliFun(cJsonEnvio)
+    Local oResponse := JsonObject():New() As Json
+    Local oDadosCli := JsonObject():New() As Json
+    Local aVetor    := {}                 As Array
+    Local cError    := ''                 As Character
+    Local aRet      := {}
+    Private lAutoErrNoFile := .T.
+    Private lMsErroAuto := .F.
+
+    cError := oDadosCli:FromJson(cJsonEnvio)  
+    If !Empty(cError)
+        oResponse['status'] := .F.
+        oResponse['message'] := "Erro ao processar JSON: " + cError
+        aRet := {400,oResponse:toJSON()}
+    Else
+        If oDadosCli != Nil .And. ;
+            !Empty(AllTrim(oDadosCli:GetJsonObject("codigo"))) .And. ;
+            !Empty(AllTrim(oDadosCli:GetJsonObject("loja"))) .And. ;
+            !Empty(AllTrim(oDadosCli:GetJsonObject("cep"))) .And. ;
+            !Empty(AllTrim(oDadosCli:GetJsonObject("logradouro"))) .And. ;
+            !Empty(AllTrim(oDadosCli:GetJsonObject("bairro"))) .And. ;
+            !Empty(AllTrim(oDadosCli:GetJsonObject("localidade"))) .And. ;
+            !Empty(AllTrim(oDadosCli:GetJsonObject("uf")))
+            
+            DbSelectArea("SA1")
+            SA1->(DbSetOrder(1))
+            If !SA1->(DbSeek(xFilial("SA1") + oDadosCli['codigo'] + oDadosCli['loja']))
+                oResponse['status']  := .F.
+                oResponse['message'] := "Cliente nao encontrado na tabela de clientes!"
+                aRet := {404,oResponse:toJSON()}
+            Else
+                aadd(aVetor, {"A1_COD"    , SA1->A1_COD                                             , Nil})
+                aadd(aVetor, {"A1_LOJA"   , SA1->A1_LOJA                                            , Nil})
+                aadd(aVetor, {"A1_CEP"    , Upper(DecodeUTF8(Alltochar(oDadosCli[ 'cep' ])))        , Nil})
+                aadd(aVetor, {"A1_END"    , Upper(DecodeUTF8(Alltochar(oDadosCli[ 'logradouro' ]))) , Nil})
+                aadd(aVetor, {"A1_COMPLEM", Upper(DecodeUTF8(Alltochar(oDadosCli[ 'complemento' ]))), Nil})
+                aadd(aVetor, {"A1_BAIRRO" , Upper(DecodeUTF8(Alltochar(oDadosCli[ 'bairro' ])))     , Nil})
+                aadd(aVetor, {"A1_EST"    , Upper(DecodeUTF8(Alltochar(oDadosCli[ 'uf' ])))         , Nil})
+                cMun := Upper(DecodeUTF8(Alltochar(oDadosCli[ 'localidade' ])))
+                aadd(aVetor, {"A1_COD_MUN", Posicione("CC2", 2, xFilial("CC2") + cMun, "CC2_CODMUN"), Nil})
+                aadd(aVetor, {"A1_MUN"    , cMun                                                    , Nil})
+
+                DbSelectArea("CC2")
+                CC2->(DbSetOrder(1))
+
+                lMsErroAuto := .F.
+                aVetor := FWVetByDic( aVetor, 'SA1' )
+
+                If GetMv("MV_MVCSA1") 
+                    MSExecAuto({|x,y| CRMA980(x,y)}, aVetor, 4)
+                else
+                    MSExecAuto({|x,y| MATA030(x,y)}, aVetor, 4)
+                EndIf  
+
+                If !lMsErroAuto
+                    oResponse['status'] := .T.
+                    oResponse['message'] := "Cliente atualizado com sucesso!"
+                    aRet := {200,oResponse:toJSON()}
+                Else
+                    cLogAuto := CenArr2Str(GetAutoGrLog(),";")
+                    oResponse['status'] := .F.
+                    oResponse['message'] := "Erro ao atualizar cliente: " + cLogAuto
+                    aRet := {400,oResponse:toJSON()}
+                EndIf
+            EndIf
+
+        Else
+            oResponse['status'] := .F.
+            oResponse['message'] := "Dados nao informados corretamente!"
+            
+            oJsonEx := JsonObject():New()
+            oJsonEx['codigo']      := "000001 (Obrigatorio)"
+            oJsonEx['loja']        := "01 (Obrigatorio)"
+            oJsonEx['cep']         := "17015000 (Obrigatorio)"
+            oJsonEx['logradouro']  := "Rua XV de Novembro (Obrigatorio)"
+            oJsonEx['complemento'] := "Apto 101" 
+            oJsonEx['bairro']      := "Centro (Obrigatorio)"
+            oJsonEx['localidade']  := "Bauru (Obrigatorio)"
+            oJsonEx['uf']          := "SP (Obrigatorio)"
+
+            oResponse['json_exemplo'] := oJsonEx
+
+            aRet := {400,oResponse:toJSON()}
+        EndIf
+    EndIf
+
+    ConOut(  FwtimeStamp(2) +  " - WSAlteraCli - Status: " + cValToChar(aRet[1]) + " - Retorno: " + aRet[2] )
+    Return aRet
+Return
+User Function GetCliFun()
+    Local oResponse := JsonObject():New() As Json
+    Local aClientes := {}
+    Local oJsonCli  := Nil
+    Local aRet      := {}
+    Local cCodigo    := ""
+    Local cLoja      := ""
+    Local cCep       := ""
+    Local cEnd       := ""
+    Local cComplem   := ""
+    Local cBairro    := ""
+    Local cUf        := ""
+    Local cLocal     := ""
+    Local cQuery     := ""
+    Private lAutoErrNoFile := .T.
+
+    cQuery := " SELECT A1_COD, A1_LOJA, A1_CEP, A1_END, A1_COMPLEM, A1_BAIRRO, A1_MUN, A1_EST "
+    cQuery += " FROM " + RetSqlName("SA1") + " SA1 "
+    cQuery += " WHERE SA1.D_E_L_E_T_ = ' ' "
+    cQuery += " AND A1_FILIAL = '" + xFilial("SA1") + "' "
+    cQuery += " ORDER BY A1_COD, A1_LOJA "
+    
+    if Select("QRYCLI") > 0
+        QRYCLI->(DbCloseArea())
+    Endif   
+    
+    TcQuery cQuery New Alias "QRYCLI"
+
+    If QRYCLI->(Eof())
+        oResponse['status']  := .F.
+        oResponse['message'] := "Nenhum cliente encontrado!"
+        aRet := {404, oResponse:toJSON()}
+    Else
+        While !QRYCLI->(Eof())
+            cCodigo  := AllTrim(QRYCLI->A1_COD)
+            cLoja    := AllTrim(QRYCLI->A1_LOJA)
+            cCep     := AllTrim(QRYCLI->A1_CEP)
+            cEnd     := AllTrim(QRYCLI->A1_END)
+            cComplem := AllTrim(QRYCLI->A1_COMPLEM)
+            cBairro  := AllTrim(QRYCLI->A1_BAIRRO)
+            cUf      := AllTrim(QRYCLI->A1_EST)
+            cLocal   := AllTrim(QRYCLI->A1_MUN)
+
+            oJsonCli := JsonObject():New()
+            oJsonCli['codigo']      := cCodigo
+            oJsonCli['loja']        := cLoja
+            oJsonCli['cep']         := cCep
+            oJsonCli['logradouro']  := cEnd
+            oJsonCli['complemento'] := cComplem
+            oJsonCli['bairro']      := cBairro
+            oJsonCli['uf']          := cUf
+            oJsonCli['localidade']  := cLocal
+
+            AAdd(aClientes, oJsonCli)
+
+            QRYCLI->(DbSkip())
+        EndDo
+
+        oResponse['status']  := .T.
+        oResponse['message'] := "Clientes encontrados com sucesso!"
+        oResponse['dados']   := aClientes
+
+        aRet := {200, oResponse:toJSON()}
+    EndIf
+
+    QRYCLI->(DbCloseArea())
+
+    ConOut(FwTimeStamp(2) + " - WSGetCli - Status: " + cValToChar(aRet[1]) + " - Registros: " + cValToChar(Len(aClientes)))
+    Return aRet
+Return
