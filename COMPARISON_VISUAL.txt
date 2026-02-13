@@ -1,0 +1,87 @@
+=============================================================================
+                    SQL QUERY COMPARISON - VISUAL GUIDE
+=============================================================================
+
+REQUIREMENT:
+Add the following fields to both SELECT and GROUP BY clauses:
+D4_FILIAL + D4_COD + D4_OP + D4_TRT + D4_LOTECTL + D4_NUMLOTE + 
+D4_LOCAL + D4_ORDEM + D4_OPORIG + D4_SEQ
+
+=============================================================================
+                              BEFORE
+=============================================================================
+
+SELECT 
+    SB2.R_E_C_N_O_ AS B2RECCNO,
+    ISNULL(SUM(SD4.D4_QUANT), 0) + ISNULL(SUM(SDD.DD_QUANT), 0) AS QTDEMP
+FROM ...
+GROUP BY 
+    SB2.R_E_C_N_O_
+
+=============================================================================
+                              AFTER
+=============================================================================
+
+SELECT 
+    SB2.R_E_C_N_O_ AS B2RECCNO,
+    SD4.D4_FILIAL,          ← ADDED
+    SD4.D4_COD,             ← ADDED
+    SD4.D4_OP,              ← ADDED
+    SD4.D4_TRT,             ← ADDED
+    SD4.D4_LOTECTL,         ← ADDED
+    SD4.D4_NUMLOTE,         ← ADDED
+    SD4.D4_LOCAL,           ← ADDED
+    SD4.D4_ORDEM,           ← ADDED
+    SD4.D4_OPORIG,          ← ADDED
+    SD4.D4_SEQ,             ← ADDED
+    ISNULL(SUM(SD4.D4_QUANT), 0) + ISNULL(SUM(SDD.DD_QUANT), 0) AS QTDEMP
+FROM ...
+GROUP BY 
+    SB2.R_E_C_N_O_,
+    SD4.D4_FILIAL,          ← ADDED
+    SD4.D4_COD,             ← ADDED
+    SD4.D4_OP,              ← ADDED
+    SD4.D4_TRT,             ← ADDED
+    SD4.D4_LOTECTL,         ← ADDED
+    SD4.D4_NUMLOTE,         ← ADDED
+    SD4.D4_LOCAL,           ← ADDED
+    SD4.D4_ORDEM,           ← ADDED
+    SD4.D4_OPORIG,          ← ADDED
+    SD4.D4_SEQ              ← ADDED
+
+=============================================================================
+                         FIELDS BREAKDOWN
+=============================================================================
+
+Field Name      | Description                | Location
+----------------|----------------------------|----------------------------
+D4_FILIAL       | Filial/Branch              | SD4 (Empenhamentos)
+D4_COD          | Product Code               | SD4 (Empenhamentos)
+D4_OP           | Production Order           | SD4 (Empenhamentos)
+D4_TRT          | Task/Operation             | SD4 (Empenhamentos)
+D4_LOTECTL      | Lot Control                | SD4 (Empenhamentos)
+D4_NUMLOTE      | Lot Number                 | SD4 (Empenhamentos)
+D4_LOCAL        | Warehouse                  | SD4 (Empenhamentos)
+D4_ORDEM        | Order Number               | SD4 (Empenhamentos)
+D4_OPORIG       | Original Production Order  | SD4 (Empenhamentos)
+D4_SEQ          | Sequence                   | SD4 (Empenhamentos)
+
+=============================================================================
+                         IMPLEMENTATION FILE
+=============================================================================
+
+File: QuerySB2SD4.prw
+Lines 17-26: SELECT clause with new fields
+Lines 50-59: GROUP BY clause with new fields
+
+=============================================================================
+                              NOTES
+=============================================================================
+
+1. All 10 fields were successfully added to both SELECT and GROUP BY
+2. The query maintains LEFT JOIN logic (returns all SB2 records)
+3. Fields can be NULL when no SD4 record matches
+4. Aggregate function QTDEMP remains unchanged
+5. Query follows SQL Server syntax (ISNULL function)
+
+=============================================================================
