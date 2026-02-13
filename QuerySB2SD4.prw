@@ -6,6 +6,9 @@
     @type  Function
     @author Gabriel Mendes
     @since 13/02/2026
+    @obs   O LEFT JOIN com SD4 pode retornar linhas com campos SD4 NULL quando
+           nao houver correspondencia. Isso e intencional para listar todos os
+           registros de SB2, mesmo aqueles sem empenhamento em SD4.
 /*/
 User Function QuerySB2SD4()
     Local cQuery := ""
